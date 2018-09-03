@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <stdbool.h>
 #define MATRIX_SIZE 8
 
@@ -20,7 +21,11 @@ int main(void)
 {
 	int i, j;
 
-	int matrix[MATRIX_SIZE][MATRIX_SIZE];
+	int **matrix = malloc(sizeof(int*) * MATRIX_SIZE);
+	for (i = 0; i < MATRIX_SIZE; i++){
+		matrix[i] = malloc(sizeof(int) * MATRIX_SIZE);
+	}
+
 	for(i = 0; i < MATRIX_SIZE; i++){
 		for(j = 0; j < MATRIX_SIZE; j++){
 			matrix[i][j] = 0;
@@ -30,17 +35,12 @@ int main(void)
 	matrix[7][5] = 1;
 	matrix[0][1] = 2;
 
-	for(i = 0; i < MATRIX_SIZE; i++){
-		for(j = 0; j < MATRIX_SIZE; j++){
-			printf("%d ", matrix[i][j]);
-		}
-		printf("\n");
-	}
-
 	POINT door = { .x = 0, .y = 1};
 	POINT aux;
 
-	while(true)
+	int counter = 0; 	
+
+	while(counter < 15)
 	{
 		for(i = 0; i < MATRIX_SIZE; i++){
 			for(j = 0; j < MATRIX_SIZE; j++){
@@ -57,6 +57,8 @@ int main(void)
 			}
 			printf("\n");
 		}
+		printf("\n");
+		counter++;
 	}
 }
 
