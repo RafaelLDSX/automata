@@ -2,8 +2,10 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <unistd.h>
-#define MATRIX_SIZE 8
-
+#include <time.h>
+#include <SDL2/SDL.h>
+#define MATRIX_SIZE_X 100
+#define MATRIX_SIZE_Y 100
 typedef struct point {
 	int x;
 	int y;
@@ -21,82 +23,147 @@ void addPOINTtoLIST(LIST* list, POINT* p);
 void removefromLIST(LIST* list, int id);
 LIST* initLIST(void);
 POINT* initPOINT(void);
-int** initMatrix(void);
+float** initMatrix(void);
 bool checkMatrix(int** matrix, int x, int y );
 void move(int** matrix, int** temp, LIST* list, POINT* door );
-void freeMatrix(int** matrix);
+void freeMatrix(float** matrix);
+void printMatrix(float** matrix);
+void thermalStuff(float** matrix, float** new);
+float* getNeighboorhood(float** matrix, int x, int y);
+void changeColor(SDL_Renderer* renderer, float color);	
+
+static float alpha = 1;
 
 static int sairam = 0;
 
 int main(void)
 {
-	int i, j;
-
-	int** matrix = initMatrix();
-
-	matrix[7][5] = 1; 	
-	matrix[0][1] = 2;
-
-	LIST* list = initLIST();
-
-	POINT* door = initPOINT();
-	door->x = 0;
-	door->y = 1;
-	door->id = 2;
-
-	POINT* aux = initPOINT();
-	aux->x = 7;
-	aux->y = 5;
-	aux->id = 1;
-	aux->alive = 1;
-
-	addPOINTtoLIST(list, aux);
-
-	aux->x = 4;
-	aux->y = 6;
-	aux->id = 4;
-
-	addPOINTtoLIST(list, aux);
-
-	int counter = 0; 	
-
-	int** temp = initMatrix();
-
-	for(i = 0; i < MATRIX_SIZE; i++){
-			for(j = 0; j < MATRIX_SIZE; j++){
-				printf("%d ", matrix[i][j]);
+	SDL_Window* window;
+	SDL_Renderer* renderer;
+	SDL_Surface* screenSurface = NULL;
+	SDL_Event event;
+	SDL_Init( SDL_INIT_VIDEO );
+	SDL_CreateWindowAndRenderer(MATRIX_SIZE_Y, MATRIX_SIZE_X, SDL_WINDOW_FULLSCREEN_DESKTOP, &window, &renderer);
+	float** chapa = initMatrix();
+	float** altChapa = initMatrix();
+	int i, j, k;
+	for (i = 0; i < MATRIX_SIZE_X; i++){
+		for (j = 0; j < MATRIX_SIZE_Y; j++){
+			if (j == 0){
+				chapa[i][j] = 0;
+				altChapa[i][j] = 0;
 			}
-			printf("\n");
-		}
-		printf("\n");
-
-	while(counter < 15)
-	{
-
-		// for(i = 0; i < MATRIX_SIZE; i++){
-		// 	for(j = 0; j < MATRIX_SIZE; j++){
-		// 		if(matrix[i][j] == 1){
-		// 			aux->x = i;
-		// 			aux->y = j;
-					move(matrix, temp, list, door);
-		// 		}
-		// 	}
-		// }
-		for(i = 0; i < MATRIX_SIZE; i++){
-			for(j = 0; j < MATRIX_SIZE; j++){
-				printf("%d ", matrix[i][j]);
+			else if (j == MATRIX_SIZE_Y - 1){
+				chapa[i][j] = 100;
+				altChapa[i][j] = 0;
 			}
-			printf("\n");
+			else{
+				chapa[i][j] = 35;
+				altChapa[i][j] = 0;
+			}
 		}
-		printf("\n");
-		counter++;
-		printf("Sairam: %d\n\n", sairam);
-		sleep(1);
 	}
-	free(door);
-	free(aux);
-	freeMatrix(matrix);
-	return 0;
+
+	SDL_RenderSetLogicalSize(renderer, MATRIX_SIZE_Y, MATRIX_SIZE_X);
+	while(true){
+		while(SDL_PollEvent(&event)){
+			if (event.type == SDL_QUIT){
+				return 0;
+			}
+		}
+		thermalStuff(chapa, altChapa);
+		for (j = 0; j < MATRIX_SIZE_X; j++){
+			for (k = 0; k < MATRIX_SIZE_Y; k++){
+				changeColor(renderer, chapa[j][k]);
+				SDL_RenderDrawPoint(renderer, k, j);
+			}
+		}
+		SDL_RenderPresent(renderer);
+	}
+
+	SDL_DestroyWindow( window );
+	SDL_Quit();
+	free(chapa);
+
+
+}
+
+void changeColor(SDL_Renderer* renderer, float color){
+	if (color == 0){
+		SDL_SetRenderDrawColor(renderer, 0, 0, 102, 255);
+	}
+	else if (color > 0 && color < 11){
+		SDL_SetRenderDrawColor(renderer, 0, 0, 204, 255);
+	}
+	else if (color > 10 && color < 21){
+		SDL_SetRenderDrawColor(renderer, 0, 102, 204, 255);
+	}
+	else if (color > 20 && color < 31){
+		SDL_SetRenderDrawColor(renderer, 0, 204, 204, 255);
+	}
+	else if (color > 40 && color < 51){
+		SDL_SetRenderDrawColor(renderer, 0, 204, 102, 255);
+	}
+	else if (color > 50 && color < 61){
+		SDL_SetRenderDrawColor(renderer, 0, 204, 0, 255);
+	}
+	else if (color > 60 && color < 71){
+		SDL_SetRenderDrawColor(renderer, 102, 204, 0, 255);
+	}
+	else if (color > 70 && color < 81){
+		SDL_SetRenderDrawColor(renderer, 204, 204, 0, 255);
+	}
+	else if (color > 80 && color < 91){
+		SDL_SetRenderDrawColor(renderer, 204, 102, 0, 255);
+	}
+	else if (color > 90 && color < 100){
+		SDL_SetRenderDrawColor(renderer, 204, 0, 0, 255);
+	}
+	else if (color == 100){
+		SDL_SetRenderDrawColor(renderer, 102, 0, 0, 255);
+	}
+}
+
+void thermalStuff(float** matrix, float** new){
+	int i, j;
+	float* n;
+	float result;
+	for (i = 1; i < MATRIX_SIZE_X-1; i++){
+		for (j = 1; j < MATRIX_SIZE_Y-1; j++){
+			n = getNeighboorhood(matrix, i, j);
+			result = n[0] + n[1] + n[2] + n[3];
+			result = ((4 * result) + result)/20;
+			result = alpha * result;
+			new[i][j] = result;
+			free(n);
+		}
+	}
+	for (i = 1; i < MATRIX_SIZE_X-1; i++){
+		for (j = 1; j < MATRIX_SIZE_Y-1; j++){
+			matrix[i][j] = new[i][j];
+		}
+	}
+
+}
+
+float* getNeighboorhood(float** matrix, int x, int y){
+	float* neighboors = malloc(sizeof(float) * 4);
+	neighboors[0] = matrix[x-1][y];
+	neighboors[1] = matrix[x][y+1];
+	neighboors[2] = matrix[x+1][y];
+	neighboors[3] = matrix[x][y-1];
+	return neighboors;
+}
+
+void printMatrix(float** matrix){
+	int i, j;
+	for (i = 0; i < MATRIX_SIZE_X; i++){
+		for (j = 0; j < MATRIX_SIZE_Y; j++){
+			printf("%.0f ", matrix[i][j]);
+		}
+		printf("\n");
+	}
+	printf("\n");
 }
 
 bool checkMatrix(int** matrix, int x, int y){
@@ -152,15 +219,15 @@ void move(int** matrix, int** temp, LIST* list, POINT* door )
 	}
 }
 
-int** initMatrix(void) {
+float** initMatrix(void) {
 	int i, j;
-	int** matrix = malloc(sizeof(int*) * MATRIX_SIZE);
-	for (i = 0; i < MATRIX_SIZE; i++){
-		matrix[i] = malloc(sizeof(int) * MATRIX_SIZE);
+	float** matrix = malloc(sizeof(float*) * MATRIX_SIZE_X);
+	for (i = 0; i < MATRIX_SIZE_X; i++){
+		matrix[i] = malloc(sizeof(float) * MATRIX_SIZE_Y);
 	}
 
-	for(i = 0; i < MATRIX_SIZE; i++){
-		for(j = 0; j < MATRIX_SIZE; j++){
+	for(i = 0; i < MATRIX_SIZE_X; i++){
+		for(j = 0; j < MATRIX_SIZE_Y; j++){
 			matrix[i][j] = 0;
 		}
 	}
@@ -218,9 +285,9 @@ POINT* initPOINT(void) {
 	return point;
 }
 
-void freeMatrix(int** matrix){
+void freeMatrix(float** matrix){
 	int i;
-	for(i = 0; i < MATRIX_SIZE; i++){
+	for(i = 0; i < MATRIX_SIZE_X; i++){
 		free(matrix[i]);
 	}
 	free(matrix);
