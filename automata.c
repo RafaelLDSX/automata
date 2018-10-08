@@ -89,49 +89,23 @@ int main(void)
 }
 
 void changeColor(SDL_Renderer* renderer, float color){
-	if (color == 0){
-		SDL_SetRenderDrawColor(renderer, 0, 0, 102, 255);
-	}
-	else if (color > 0 && color < 11){
-		SDL_SetRenderDrawColor(renderer, 0, 0, 204, 255);
-	}
-	else if (color > 10 && color < 21){
-		SDL_SetRenderDrawColor(renderer, 0, 102, 204, 255);
-	}
-	else if (color > 20 && color < 31){
-		SDL_SetRenderDrawColor(renderer, 0, 204, 204, 255);
-	}
-	else if (color > 40 && color < 51){
-		SDL_SetRenderDrawColor(renderer, 0, 204, 102, 255);
-	}
-	else if (color > 50 && color < 61){
-		SDL_SetRenderDrawColor(renderer, 0, 204, 0, 255);
-	}
-	else if (color > 60 && color < 71){
-		SDL_SetRenderDrawColor(renderer, 102, 204, 0, 255);
-	}
-	else if (color > 70 && color < 81){
-		SDL_SetRenderDrawColor(renderer, 204, 204, 0, 255);
-	}
-	else if (color > 80 && color < 91){
-		SDL_SetRenderDrawColor(renderer, 204, 102, 0, 255);
-	}
-	else if (color > 90 && color < 100){
-		SDL_SetRenderDrawColor(renderer, 204, 0, 0, 255);
-	}
-	else if (color == 100){
-		SDL_SetRenderDrawColor(renderer, 102, 0, 0, 255);
-	}
+	
+	float r, g, b;
+	r = color * 2.55;
+	g = 127;
+	b = (100 - color) * 2.55;
+	SDL_SetRenderDrawColor(renderer, r, g, b, 255);
 }
 
-void thermalStuff(float** matrix, float** new){
+void thermalStuff(float** matrix, float**new){
 	int i, j;
 	float* n;
-	float result;
+	float result, result2;
 	for (i = 1; i < MATRIX_SIZE_X-1; i++){
 		for (j = 1; j < MATRIX_SIZE_Y-1; j++){
 			n = getNeighboorhood(matrix, i, j);
 			result = n[0] + n[1] + n[2] + n[3];
+			result2 = n[4] + n[5] + n[6] + n[7];
 			result = ((4 * result) + result)/20;
 			result = alpha * result;
 			new[i][j] = result;
@@ -143,15 +117,23 @@ void thermalStuff(float** matrix, float** new){
 			matrix[i][j] = new[i][j];
 		}
 	}
+	// float** aux = NULL;
+	// aux = *matrix;
+	// *matrix = *new;
+	// *new = aux;
 
 }
 
 float* getNeighboorhood(float** matrix, int x, int y){
-	float* neighboors = malloc(sizeof(float) * 4);
+	float* neighboors = malloc(sizeof(float) * 8);
 	neighboors[0] = matrix[x-1][y];
 	neighboors[1] = matrix[x][y+1];
 	neighboors[2] = matrix[x+1][y];
 	neighboors[3] = matrix[x][y-1];
+	neighboors[4] = matrix[x-1][y-1];
+	neighboors[5] = matrix[x+1][y+1];
+	neighboors[6] = matrix[x+1][y-1];
+	neighboors[7] = matrix[x-1][y+1]; 
 	return neighboors;
 }
 
