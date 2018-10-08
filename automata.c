@@ -106,7 +106,7 @@ void thermalStuff(float** matrix, float**new){
 			n = getNeighboorhood(matrix, i, j);
 			result = n[0] + n[1] + n[2] + n[3];
 			result2 = n[4] + n[5] + n[6] + n[7];
-			result = ((4 * result) + result)/20;
+			result = ((4 * result) + result2)/20;
 			result = alpha * result;
 			new[i][j] = result;
 			free(n);
