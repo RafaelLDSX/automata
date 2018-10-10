@@ -4,8 +4,9 @@
 #include <unistd.h>
 #include <time.h>
 #include <SDL2/SDL.h>
-#define MATRIX_SIZE_X 100
-#define MATRIX_SIZE_Y 100
+#include <math.h>
+#define MATRIX_SIZE_X 500
+#define MATRIX_SIZE_Y 500
 typedef struct point {
 	int x;
 	int y;
@@ -36,6 +37,10 @@ static float alpha = 1;
 
 static int sairam = 0;
 
+static int steps = 0;
+
+static int flag = 1;
+
 int main(void)
 {
 	SDL_Window* window;
@@ -43,9 +48,10 @@ int main(void)
 	SDL_Surface* screenSurface = NULL;
 	SDL_Event event;
 	SDL_Init( SDL_INIT_VIDEO );
-	SDL_CreateWindowAndRenderer(MATRIX_SIZE_Y, MATRIX_SIZE_X, SDL_WINDOW_FULLSCREEN_DESKTOP, &window, &renderer);
+	SDL_CreateWindowAndRenderer(500, 500, SDL_WINDOW_RESIZABLE, &window, &renderer);
 	float** chapa = initMatrix();
 	float** altChapa = initMatrix();
+	float** aux;
 	int i, j, k;
 	for (i = 0; i < MATRIX_SIZE_X; i++){
 		for (j = 0; j < MATRIX_SIZE_Y; j++){
@@ -55,11 +61,11 @@ int main(void)
 			}
 			else if (j == MATRIX_SIZE_Y - 1){
 				chapa[i][j] = 100;
-				altChapa[i][j] = 0;
+				altChapa[i][j] = 100;
 			}
 			else{
 				chapa[i][j] = 35;
-				altChapa[i][j] = 0;
+				altChapa[i][j] = 35;
 			}
 		}
 	}
@@ -79,6 +85,11 @@ int main(void)
 			}
 		}
 		SDL_RenderPresent(renderer);
+		steps += 1;
+		printf("Steps: %d\n", steps);
+		aux = chapa;
+		chapa = altChapa;
+		altChapa = chapa;
 	}
 
 	SDL_DestroyWindow( window );
@@ -90,14 +101,32 @@ int main(void)
 
 void changeColor(SDL_Renderer* renderer, float color){
 	
-	float r, g, b;
-	r = color * 2.55;
-	g = 127;
-	b = (100 - color) * 2.55;
+	float r, g, b, trueColor, left;
+	r = 28;
+	g = 28;
+	b = 255;
+	trueColor = (color * 9) + 8;
+	g = g + trueColor;
+	if (g > 255){
+		left = g - 255;
+		g = 255;
+		b = b - left;
+		if (b < 28){
+			left = 28 - b;
+			b = 28;
+			r = r + left;
+			if (r > 255){
+				left = r - 255;
+				r = 255;
+				g = g - left;
+			}
+		}
+	}
+	
 	SDL_SetRenderDrawColor(renderer, r, g, b, 255);
 }
 
-void thermalStuff(float** matrix, float**new){
+void thermalStuff(float** matrix, float** new){
 	int i, j;
 	float* n;
 	float result, result2;
@@ -112,15 +141,15 @@ void thermalStuff(float** matrix, float**new){
 			free(n);
 		}
 	}
-	for (i = 1; i < MATRIX_SIZE_X-1; i++){
-		for (j = 1; j < MATRIX_SIZE_Y-1; j++){
-			matrix[i][j] = new[i][j];
-		}
-	}
+	// for (i = 1; i < MATRIX_SIZE_X-1; i++){
+	// 	for (j = 1; j < MATRIX_SIZE_Y-1; j++){
+	// 		matrix[i][j] = new[i][j];
+	// 	}
+	// }
 	// float** aux = NULL;
-	// aux = *matrix;
-	// *matrix = *new;
-	// *new = aux;
+	// aux = matrix;
+	// matrix = new;
+	// new = aux;
 
 }
 
